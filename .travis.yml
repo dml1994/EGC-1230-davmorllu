@@ -1,0 +1,29 @@
+dist: xenial
+
+services:
+  - postgresql
+addons:
+  postgresql: "9.4"
+
+include:
+	- language: python
+python: 
+- "3.6"
+before_install:
+	- psql -U postgres -c "DROP DATABASE IF EXISTS test_decide"
+	- psql -U postgres -c "create user decide password 'decide'"
+	- psql -U postgres -c "create database test_decide owner decide"
+	- psql -U postgres -c "ALTER USER decide CREATEDB"
+	- psql -U postgres -c "create database decide owner decide"
+install:
+	- pip install -r requirements.txt
+	- pip install codacy-coverage
+script:
+	- cd decide
+	- python ./manage.py makemigrations
+	- python ./manage.py migrate
+	- coverage run --branch --source=. ./manage.py test store --keepdb --with-xunit
+	- coverage xml
+	- python-codacy-coverage -r coverage.xml
+
+
